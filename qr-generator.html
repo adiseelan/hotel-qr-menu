@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Le Grand Hôtel — QR Code Generator</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Raleway:wght@200;300;400;500;600&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    :root {
+      --gold: #C9A96E;
+      --gold-light: #E8C98A;
+      --black: #0B0B0B;
+      --dark: #111;
+      --dark2: #1A1A1A;
+      --white: #F5F0E8;
+      --white-dim: rgba(245,240,232,0.65);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Raleway', sans-serif;
+      background: var(--black);
+      color: var(--white);
+      min-height: 100vh;
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; padding: 40px 20px;
+    }
+    .page-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.6rem, 4vw, 2.8rem);
+      color: var(--gold);
+      text-align: center;
+      margin-bottom: 6px;
+    }
+    .page-sub {
+      font-size: 13px; color: var(--white-dim); font-weight: 300;
+      text-align: center; margin-bottom: 40px; letter-spacing: 1px;
+    }
+    .generator-card {
+      background: var(--dark2);
+      border: 1px solid rgba(201,169,110,0.2);
+      border-radius: 16px;
+      padding: 40px;
+      max-width: 520px;
+      width: 100%;
+    }
+    label {
+      display: block;
+      font-size: 11px; letter-spacing: 3px; text-transform: uppercase;
+      color: var(--gold); margin-bottom: 8px; font-weight: 500;
+    }
+    input, select {
+      width: 100%;
+      background: var(--dark);
+      border: 1px solid rgba(201,169,110,0.2);
+      color: var(--white);
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-family: 'Raleway', sans-serif;
+      font-size: 14px;
+      outline: none;
+      margin-bottom: 20px;
+      transition: border-color 0.3s;
+    }
+    input:focus, select:focus { border-color: var(--gold); }
+    select option { background: var(--dark2); }
+    .gen-btn {
+      width: 100%;
+      background: linear-gradient(135deg, var(--gold), #9A7A45);
+      color: var(--black);
+      border: none; border-radius: 8px;
+      padding: 14px;
+      font-family: 'Raleway', sans-serif;
+      font-weight: 700; font-size: 13px;
+      letter-spacing: 2px; text-transform: uppercase;
+      cursor: pointer;
+      transition: opacity 0.3s;
+      margin-bottom: 32px;
+    }
+    .gen-btn:hover { opacity: 0.9; }
+    .qr-output {
+      display: none;
+      text-align: center;
+    }
+    .qr-output.visible { display: block; animation: fadeUp 0.5s ease; }
+    .qr-frame {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      display: inline-block;
+      margin-bottom: 20px;
+      box-shadow: 0 0 40px rgba(201,169,110,0.15);
+    }
+    .qr-label {
+      font-family: 'Playfair Display', serif;
+      font-size: 15px; color: var(--gold); margin-bottom: 4px;
+    }
+    .qr-room { font-size: 13px; color: var(--white-dim); margin-bottom: 20px; }
+    .download-btn {
+      display: inline-block;
+      background: transparent;
+      border: 1px solid var(--gold);
+      color: var(--gold);
+      border-radius: 8px;
+      padding: 10px 24px;
+      font-family: 'Raleway', sans-serif;
+      font-weight: 600; font-size: 12px;
+      letter-spacing: 2px; text-transform: uppercase;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.3s, color 0.3s;
+    }
+    .download-btn:hover { background: var(--gold); color: var(--black); }
+    .divider {
+      width: 60px; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      margin: 32px auto;
+    }
+    .bulk-section h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 18px; color: var(--white);
+      margin-bottom: 12px; text-align: center;
+    }
+    .bulk-section p { font-size: 13px; color: var(--white-dim); text-align: center; margin-bottom: 20px; line-height: 1.7; }
+    .bulk-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .bulk-qr {
+      background: var(--dark);
+      border: 1px solid rgba(201,169,110,0.1);
+      border-radius: 10px; padding: 16px;
+      text-align: center;
+    }
+    .bulk-qr .bulk-frame {
+      background: white; border-radius: 8px; padding: 10px;
+      display: inline-block; margin-bottom: 10px;
+    }
+    .bulk-qr .bulk-label { font-size: 12px; color: var(--gold); font-weight: 600; }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .back-link {
+      display: inline-block;
+      margin-top: 32px;
+      font-size: 13px;
+      color: var(--white-dim);
+      text-decoration: none;
+      letter-spacing: 1px;
+      transition: color 0.3s;
+    }
+    .back-link:hover { color: var(--gold); }
+  </style>
+</head>
+<body>
+
+  <h1 class="page-title">QR Code Generator</h1>
+  <p class="page-sub">Le Grand Hôtel — Room Service Menu</p>
+
+  <div class="generator-card">
+
+    <!-- Single QR -->
+    <label>Menu URL</label>
+    <input type="url" id="menuUrl" value="https://yourdomain.com/index.html" placeholder="https://yourdomain.com/index.html" />
+
+    <label>Room Number</label>
+    <input type="text" id="roomNum" value="101" placeholder="e.g. 204" />
+
+    <label>QR Size</label>
+    <select id="qrSize">
+      <option value="200">Small (200×200)</option>
+      <option value="256" selected>Medium (256×256)</option>
+      <option value="320">Large (320×320)</option>
+    </select>
+
+    <button class="gen-btn" onclick="generateQR()">Generate QR Code</button>
+
+    <!-- Output -->
+    <div class="qr-output" id="qrOutput">
+      <div class="qr-frame">
+        <div id="qrcode"></div>
+      </div>
+      <p class="qr-label">Le Grand Hôtel</p>
+      <p class="qr-room">Room <span id="qrRoomLabel">101</span> — Scan to Order</p>
+      <a class="download-btn" id="downloadBtn" onclick="downloadQR()">⬇ Download PNG</a>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Bulk section -->
+    <div class="bulk-section">
+      <h3>Bulk Generate — Rooms 101 to 108</h3>
+      <p>Preview QR codes for a set of rooms. In production, connect to your PMS to generate per-room URLs.</p>
+      <button class="gen-btn" onclick="generateBulk()">Generate Sample Batch</button>
+      <div class="bulk-grid" id="bulkGrid"></div>
+    </div>
+
+  </div>
+
+  <a class="back-link" href="index.html">← Back to Menu</a>
+
+  <script>
+    let qrInstance = null;
+
+    function generateQR() {
+      const url     = document.getElementById('menuUrl').value.trim();
+      const room    = document.getElementById('roomNum').value.trim() || '101';
+      const size    = parseInt(document.getElementById('qrSize').value);
+
+      if (!url) { alert('Please enter a menu URL'); return; }
+
+      const container = document.getElementById('qrcode');
+      container.innerHTML = '';
+      if (qrInstance) { try { qrInstance.clear(); } catch(e){} }
+
+      qrInstance = new QRCode(container, {
+        text: `${url}?room=${encodeURIComponent(room)}`,
+        width: size, height: size,
+        colorDark: '#000000',
+        colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.H
+      });
+
+      document.getElementById('qrRoomLabel').textContent = room;
+      document.getElementById('qrOutput').classList.add('visible');
+    }
+
+    function downloadQR() {
+      const canvas = document.querySelector('#qrcode canvas');
+      if (!canvas) { alert('Generate a QR first'); return; }
+      const room = document.getElementById('roomNum').value || '101';
+      const link = document.createElement('a');
+      link.download = `qr-room-${room}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
+
+    function generateBulk() {
+      const url  = document.getElementById('menuUrl').value.trim() || 'https://yourdomain.com/index.html';
+      const grid = document.getElementById('bulkGrid');
+      grid.innerHTML = '';
+
+      for (let r = 101; r <= 108; r++) {
+        const cell = document.createElement('div');
+        cell.className = 'bulk-qr';
+        const frame = document.createElement('div');
+        frame.className = 'bulk-frame';
+        const qrDiv = document.createElement('div');
+        frame.appendChild(qrDiv);
+        cell.appendChild(frame);
+        cell.innerHTML += `<p class="bulk-label">Room ${r}</p>`;
+        grid.appendChild(cell);
+
+        new QRCode(qrDiv, {
+          text: `${url}?room=${r}`,
+          width: 100, height: 100,
+          colorDark: '#000000',
+          colorLight: '#ffffff',
+          correctLevel: QRCode.CorrectLevel.M
+        });
+      }
+    }
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kitchen Dashboard — Le Grand Hôtel</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Raleway:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --gold:#C9A96E; --gold-light:#E8C98A;
+      --black:#0B0B0B; --dark:#111; --dark2:#1A1A1A; --dark3:#242424;
+      --white:#F5F0E8; --white-dim:rgba(245,240,232,0.65);
+      --green:#4CAF50; --amber:#FF9800; --red:#F44336; --blue:#2196F3;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Raleway',sans-serif;background:var(--black);color:var(--white);min-height:100vh}
+
+    /* Header */
+    .dash-header{
+      background:var(--dark2);border-bottom:1px solid rgba(201,169,110,0.2);
+      padding:0 24px;height:64px;display:flex;align-items:center;justify-content:space-between;
+      position:sticky;top:0;z-index:50;
+    }
+    .dash-title{font-family:'Playfair Display',serif;font-size:20px;color:var(--gold)}
+    .dash-subtitle{font-size:12px;color:var(--white-dim);font-weight:300;margin-top:2px}
+    .live-badge{
+      background:rgba(76,175,80,0.15);border:1px solid #4CAF50;
+      color:#81C784;border-radius:20px;padding:4px 12px;
+      font-size:11px;font-weight:600;letter-spacing:1px;
+      display:flex;align-items:center;gap:6px;
+    }
+    .live-dot{width:7px;height:7px;border-radius:50%;background:#4CAF50;animation:pulse 1.5s infinite}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+
+    /* Stats bar */
+    .stats-bar{
+      display:grid;grid-template-columns:repeat(4,1fr);gap:1px;
+      background:rgba(201,169,110,0.1);border-bottom:1px solid rgba(201,169,110,0.1);
+    }
+    .stat-cell{
+      background:var(--dark);padding:20px 24px;text-align:center;
+    }
+    .stat-num{font-family:'Playfair Display',serif;font-size:28px;color:var(--gold);margin-bottom:4px}
+    .stat-label{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--white-dim);font-weight:400}
+
+    /* Controls */
+    .controls{
+      padding:20px 24px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;
+      border-bottom:1px solid rgba(255,255,255,0.05);
+    }
+    .filter-btn{
+      background:var(--dark2);border:1px solid rgba(201,169,110,0.15);
+      color:var(--white-dim);border-radius:6px;padding:8px 16px;
+      font-family:'Raleway',sans-serif;font-size:12px;letter-spacing:1px;
+      cursor:pointer;transition:all 0.25s;text-transform:uppercase;
+    }
+    .filter-btn:hover{border-color:var(--gold);color:var(--gold)}
+    .filter-btn.active{background:var(--gold);color:var(--black);border-color:var(--gold);font-weight:700}
+    .controls-right{margin-left:auto;display:flex;gap:10px}
+    .refresh-btn{
+      background:transparent;border:1px solid rgba(201,169,110,0.3);
+      color:var(--gold);border-radius:6px;padding:8px 16px;
+      font-family:'Raleway',sans-serif;font-size:12px;cursor:pointer;transition:all 0.25s;
+    }
+    .refresh-btn:hover{background:rgba(201,169,110,0.1)}
+
+    /* Orders grid */
+    .orders-container{padding:24px;max-width:1400px;margin:0 auto}
+    .orders-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
+    .section-label{
+      grid-column:1/-1;
+      font-size:10px;letter-spacing:4px;text-transform:uppercase;
+      color:var(--gold);opacity:0.7;margin-top:8px;
+    }
+
+    /* Order card */
+    .order-card{
+      background:var(--dark2);border-radius:12px;overflow:hidden;
+      border:1px solid rgba(255,255,255,0.06);
+      transition:border-color 0.25s,transform 0.25s;
+    }
+    .order-card:hover{border-color:rgba(201,169,110,0.25);transform:translateY(-2px)}
+    .card-header{padding:16px 18px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(255,255,255,0.05)}
+    .room-badge{
+      background:rgba(201,169,110,0.15);border:1px solid rgba(201,169,110,0.3);
+      color:var(--gold);border-radius:6px;padding:4px 10px;
+      font-family:'Playfair Display',serif;font-size:16px;font-weight:700;
+      white-space:nowrap;
+    }
+    .card-meta{flex:1}
+    .order-id{font-size:11px;color:var(--white-dim);letter-spacing:1px;margin-bottom:2px}
+    .order-time{font-size:12px;color:var(--white);font-weight:500}
+    .status-chip{
+      font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;
+      border-radius:20px;padding:4px 10px;border:1px solid currentColor;white-space:nowrap;
+    }
+    .status-new{color:#2196F3;border-color:rgba(33,150,243,0.4);background:rgba(33,150,243,0.1)}
+    .status-prep{color:#FF9800;border-color:rgba(255,152,0,0.4);background:rgba(255,152,0,0.1)}
+    .status-ready{color:#4CAF50;border-color:rgba(76,175,80,0.4);background:rgba(76,175,80,0.1)}
+    .status-done{color:var(--white-dim);border-color:rgba(255,255,255,0.15);background:transparent}
+
+    .card-items{padding:14px 18px;border-bottom:1px solid rgba(255,255,255,0.05)}
+    .order-item-row{
+      display:flex;justify-content:space-between;align-items:center;
+      padding:4px 0;font-size:13px;color:var(--white-dim);
+    }
+    .order-item-row .qty{color:var(--gold);font-weight:600;margin-right:8px}
+    .order-item-row .item-total{color:var(--white);font-weight:500;font-size:12px}
+
+    .card-note{
+      padding:10px 18px;font-size:12px;color:var(--white-dim);
+      border-bottom:1px solid rgba(255,255,255,0.05);
+      font-style:italic;
+    }
+    .card-footer{
+      padding:14px 18px;display:flex;align-items:center;justify-content:space-between;
+    }
+    .order-total{font-family:'Playfair Display',serif;font-size:18px;color:var(--gold)}
+    .card-actions{display:flex;gap:8px}
+    .action-btn{
+      border:none;border-radius:6px;padding:8px 14px;
+      font-family:'Raleway',sans-serif;font-size:11px;font-weight:700;
+      letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:opacity 0.2s;
+    }
+    .action-btn:hover{opacity:0.85}
+    .btn-prep{background:#FF9800;color:#000}
+    .btn-ready{background:#4CAF50;color:#000}
+    .btn-done{background:var(--dark3);color:var(--white-dim);border:1px solid rgba(255,255,255,0.1)}
+    .btn-print{background:transparent;border:1px solid rgba(201,169,110,0.3);color:var(--gold)}
+
+    /* Empty state */
+    .empty-state{
+      text-align:center;padding:80px 20px;
+      grid-column:1/-1;
+    }
+    .empty-state .e-icon{font-size:48px;margin-bottom:16px}
+    .empty-state p{color:var(--white-dim);font-size:15px;font-weight:300}
+
+    /* Timer */
+    .timer{
+      font-size:12px;letter-spacing:1px;
+      padding:3px 8px;border-radius:4px;
+      background:rgba(255,255,255,0.05);
+    }
+    .timer.urgent{color:#F44336}
+    .timer.warning{color:#FF9800}
+    .timer.ok{color:#4CAF50}
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="dash-header">
+    <div>
+      <div class="dash-title">Kitchen Dashboard</div>
+      <div class="dash-subtitle">Le Grand Hôtel — Room Service Orders</div>
+    </div>
+    <div class="live-badge">
+      <div class="live-dot"></div>
+      LIVE
+    </div>
+  </header>
+
+  <!-- Stats -->
+  <div class="stats-bar">
+    <div class="stat-cell">
+      <div class="stat-num" id="statNew">3</div>
+      <div class="stat-label">New Orders</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-num" id="statPrep">2</div>
+      <div class="stat-label">Preparing</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-num" id="statReady">1</div>
+      <div class="stat-label">Ready</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-num" id="statDone">8</div>
+      <div class="stat-label">Delivered Today</div>
+    </div>
+  </div>
+
+  <!-- Controls -->
+  <div class="controls">
+    <button class="filter-btn active" onclick="filterOrders('all',this)">All</button>
+    <button class="filter-btn" onclick="filterOrders('new',this)">🔵 New</button>
+    <button class="filter-btn" onclick="filterOrders('prep',this)">🟠 Preparing</button>
+    <button class="filter-btn" onclick="filterOrders('ready',this)">🟢 Ready</button>
+    <button class="filter-btn" onclick="filterOrders('done',this)">✓ Delivered</button>
+    <div class="controls-right">
+      <button class="refresh-btn" onclick="renderOrders()">↻ Refresh</button>
+    </div>
+  </div>
+
+  <!-- Orders -->
+  <div class="orders-container">
+    <div class="orders-grid" id="ordersGrid"></div>
+  </div>
+
+  <script>
+    // Sample orders data (in production: pull from backend)
+    let orders = [
+      {
+        id:'ORD-2401', room:'204', time:'19:42', status:'new', elapsed:8,
+        note:'No onion in salad please',
+        items:[
+          {name:'Caesar Salad',qty:1,price:520},
+          {name:'Wagyu Tenderloin 200g',qty:1,price:4200},
+          {name:'Dark Chocolate Soufflé',qty:2,price:780},
+          {name:'Old Fashioned',qty:2,price:780},
+        ]
+      },
+      {
+        id:'ORD-2400', room:'118', time:'19:35', status:'prep', elapsed:15,
+        note:'',
+        items:[
+          {name:'Lobster Bisque',qty:2,price:980},
+          {name:'Seared Sea Bass',qty:2,price:1850},
+          {name:'Martini (Dirty)',qty:2,price:820},
+        ]
+      },
+      {
+        id:'ORD-2399', room:'305', time:'19:20', status:'ready', elapsed:30,
+        note:'Gluten-free bread for both guests',
+        items:[
+          {name:'Eggs Benedict',qty:2,price:720},
+          {name:'Freshly Squeezed Juices',qty:2,price:280},
+          {name:'Specialty Coffee',qty:2,price:220},
+        ]
+      },
+      {
+        id:'ORD-2398', room:'412', time:'19:55', status:'new', elapsed:3,
+        note:'',
+        items:[
+          {name:'Truffle Risotto',qty:1,price:1450},
+          {name:'Burrata & Heirloom Tomato',qty:1,price:680},
+          {name:'House Red Wine',qty:2,price:480},
+        ]
+      },
+      {
+        id:'ORD-2397', room:'501', time:'18:50', status:'done', elapsed:65,
+        note:'',
+        items:[
+          {name:'Dal Makhani',qty:1,price:460},
+          {name:'Paneer Tikka Masala',qty:1,price:620},
+          {name:'Mango Lassi',qty:2,price:280},
+        ]
+      },
+      {
+        id:'ORD-2396', room:'207', time:'20:02', status:'new', elapsed:1,
+        note:'Nut allergy — critical',
+        items:[
+          {name:'Club Sandwich',qty:2,price:580},
+          {name:'French Toast Royale',qty:1,price:480},
+          {name:'Specialty Coffee',qty:2,price:220},
+        ]
+      },
+      {
+        id:'ORD-2395', room:'310', time:'19:48', status:'prep', elapsed:10,
+        note:'',
+        items:[
+          {name:'Cheese Board',qty:1,price:1200},
+          {name:'Champagne — Moët & Chandon',qty:1,price:2400},
+        ]
+      },
+    ];
+
+    let currentFilter = 'all';
+
+    function calcTotal(items) {
+      const sub = items.reduce((s,i) => s + i.price*i.qty, 0);
+      const tax = Math.round(sub * 0.18);
+      return sub + tax;
+    }
+
+    function timerClass(elapsed, status) {
+      if (status === 'done') return '';
+      if (elapsed > 30) return 'urgent';
+      if (elapsed > 18) return 'warning';
+      return 'ok';
+    }
+
+    function setStatus(id, newStatus) {
+      const o = orders.find(o => o.id === id);
+      if (o) { o.status = newStatus; renderOrders(); updateStats(); }
+    }
+
+    function updateStats() {
+      document.getElementById('statNew').textContent   = orders.filter(o=>o.status==='new').length;
+      document.getElementById('statPrep').textContent  = orders.filter(o=>o.status==='prep').length;
+      document.getElementById('statReady').textContent = orders.filter(o=>o.status==='ready').length;
+      document.getElementById('statDone').textContent  = orders.filter(o=>o.status==='done').length;
+    }
+
+    function filterOrders(status, btn) {
+      currentFilter = status;
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderOrders();
+    }
+
+    function renderOrders() {
+      const grid = document.getElementById('ordersGrid');
+      const filtered = currentFilter === 'all' ? orders : orders.filter(o => o.status === currentFilter);
+
+      if (filtered.length === 0) {
+        grid.innerHTML = `<div class="empty-state"><div class="e-icon">✅</div><p>No orders in this category right now.</p></div>`;
+        return;
+      }
+
+      grid.innerHTML = filtered.map(o => {
+        const total = calcTotal(o.items);
+        const tc = timerClass(o.elapsed, o.status);
+        const statusLabel = {new:'New',prep:'Preparing',ready:'Ready',done:'Delivered'}[o.status];
+        const statusClass = {new:'status-new',prep:'status-prep',ready:'status-ready',done:'status-done'}[o.status];
+
+        const itemRows = o.items.map(i => `
+          <div class="order-item-row">
+            <div><span class="qty">${i.qty}×</span>${i.name}</div>
+            <div class="item-total">₹ ${(i.price*i.qty).toLocaleString('en-IN')}</div>
+          </div>
+        `).join('');
+
+        const actions = o.status === 'new'   ? `<button class="action-btn btn-prep"  onclick="setStatus('${o.id}','prep')">Start</button>` :
+                        o.status === 'prep'  ? `<button class="action-btn btn-ready" onclick="setStatus('${o.id}','ready')">Ready</button>` :
+                        o.status === 'ready' ? `<button class="action-btn btn-done"  onclick="setStatus('${o.id}','done')">Delivered</button>` : '';
+
+        return `
+          <div class="order-card" data-status="${o.status}">
+            <div class="card-header">
+              <div class="room-badge">Rm ${o.room}</div>
+              <div class="card-meta">
+                <div class="order-id">${o.id}</div>
+                <div class="order-time">${o.time} &nbsp;<span class="timer ${tc}">${o.elapsed}min ago</span></div>
+              </div>
+              <div class="status-chip ${statusClass}">${statusLabel}</div>
+            </div>
+            <div class="card-items">${itemRows}</div>
+            ${o.note ? `<div class="card-note">📝 ${o.note}</div>` : ''}
+            <div class="card-footer">
+              <div class="order-total">₹ ${total.toLocaleString('en-IN')}</div>
+              <div class="card-actions">
+                <button class="action-btn btn-print" onclick="alert('Printing order ${o.id}...')">Print</button>
+                ${actions}
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Init
+    renderOrders();
+    updateStats();
+
+    // Simulate elapsed time ticking
+    setInterval(() => {
+      orders.forEach(o => { if(o.status !== 'done') o.elapsed++; });
+      renderOrders();
+    }, 60000);
+  </script>
+
+</body>
+</html>
